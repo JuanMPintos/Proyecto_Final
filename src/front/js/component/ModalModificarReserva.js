@@ -5,13 +5,19 @@ import Swal from 'sweetalert2';
 export const ModalModificarReserva = ({ isOpen, onClose, reserva, actualizarReservaEnLista }) => {
     const { actions } = useContext(Context);
     const [formData, setFormData] = useState({
-        adultos: reserva.adultos,  
-        niños: reserva.niños || 0,  
-        trona: reserva.trona || 0,  
-        fecha_reserva: reserva.fecha_reserva.split('T')[0],  
-        hora: reserva.fecha_reserva.split('T')[1].substring(0, 5), 
+        adultos: reserva.adultos,
+        niños: reserva.niños || 0,
+        trona: reserva.trona || 0,
+        fecha_reserva: reserva.fecha_reserva.split('T')[0],
+        hora: reserva.fecha_reserva.split('T')[1].substring(0, 5),
         restaurante_id: reserva.restaurante_id
     });
+
+    const handleBackdropClick = (e) => {
+        if (e.target.classList.contains('modal')) {
+            onClose();
+        }
+    };
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -26,15 +32,15 @@ export const ModalModificarReserva = ({ isOpen, onClose, reserva, actualizarRese
                 body: JSON.stringify(formData)
             });
             if (response.ok) {
-                const reservaActualizada = await response.json();  
-                actualizarReservaEnLista(reservaActualizada.reserva);  
+                const reservaActualizada = await response.json();
+                actualizarReservaEnLista(reservaActualizada.reserva);
                 Swal.fire({
                     title: 'Reserva actualizada con éxito',
                     text: 'La reserva ha sido modificada correctamente.',
                     icon: 'success',
                     confirmButtonText: 'Aceptar'
                 });
-                onClose();  
+                onClose();
             } else {
                 Swal.fire({
                     title: 'Error',
@@ -83,8 +89,8 @@ export const ModalModificarReserva = ({ isOpen, onClose, reserva, actualizarRese
                             'Tu reserva ha sido eliminada con éxito.',
                             'success'
                         );
-                        actualizarReservaEnLista(reserva.id);  
-                        onClose();  
+                        actualizarReservaEnLista(null, reserva.id);
+                        onClose();
                     } else {
                         Swal.fire(
                             'Error',
@@ -106,12 +112,19 @@ export const ModalModificarReserva = ({ isOpen, onClose, reserva, actualizarRese
     if (!isOpen) return null;
 
     return (
-        <div className="modal fade show" style={{ display: "block" }} tabIndex="-1" aria-labelledby="modifyReservationModalLabel" aria-hidden="true">
-            <div className="modal-dialog">
+        <div
+            className="modal fade show"
+            style={{ display: "block" }}
+            tabIndex="-1"
+            aria-labelledby="modifyReservationModalLabel"
+            aria-hidden="true"
+            onClick={handleBackdropClick}  // Detecta el clic en el fondo
+        >
+            <div className="modal-dialog" onClick={(e) => e.stopPropagation()}>  {/* Evita que el clic en el contenido cierre el modal */}
                 <div className="modal-content">
                     <div className="modal-header">
                         <h5 className="modal-title" id="modifyReservationModalLabel">Modificar Reserva</h5>
-                        <button type="button" className="btn-close" onClick={onClose} aria-label="Close"></button>
+                        <button type="button" className="btn-close btn-close-white" data-bs-theme="dark" onClick={onClose} aria-label="Close"></button>
                     </div>
                     <div className="modal-body">
                         <form onSubmit={handleSubmit}>

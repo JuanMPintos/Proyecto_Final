@@ -362,6 +362,7 @@ def update_restaurante(restaurante_id):
     restaurante.direccion = body.get('direccion', restaurante.direccion)
     restaurante.cubiertos = body.get('cubiertos', restaurante.cubiertos)
     restaurante.cantidad_mesas = body.get('cantidad_mesas', restaurante.cantidad_mesas)
+    restaurante.telefono = body.get('telefono', restaurante.telefono)
 
     # Validar y actualizar los horarios
     try:
@@ -450,7 +451,7 @@ def get_restaurantes_por_categoria(categoria_id):
     return jsonify([restaurante.serialize() for restaurante in restaurantes]), 200
 
 
-#CREAR RESERVA
+# CREAR RESERVA
 
 from datetime import datetime
 from api.utils import validar_horario_reserva  
@@ -530,8 +531,10 @@ def actualizar_reserva(reserva_id):
         reserva.niños = body['niños']
     if 'trona' in body:
         reserva.trona = body['trona']
-    if 'fecha_reserva' in body:
-        reserva.fecha_reserva = body['fecha_reserva']
+    if 'fecha_reserva' in body and 'hora' in body:
+
+        fecha_reserva_str = body['fecha_reserva'] + ' ' + body['hora'] + ':00'
+        reserva.fecha_reserva = fecha_reserva_str
 
     db.session.commit()
     

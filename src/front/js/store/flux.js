@@ -9,9 +9,18 @@ const getState = ({ getStore, getActions, setStore }) => {
             restaurantes_favoritos: [],
             restaurantDetails: {},
             imagenes: [],
+            userName: sessionStorage.getItem('user_name')
         },
 
         actions: {
+
+
+
+            actualizarNombreUsuario: (nombre)=> {
+                const store= getStore()
+                setStore({userName: nombre})
+
+            },
 
             // CAMBIAR CONTRASEÑA RESTAURANTE
             cambiarContraseña: async (data) => {
@@ -476,6 +485,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                     const formatearHora = (hora) => {
                         return hora ? hora.slice(0, 5) : null;
                     };
+                    console.log(formData)
 
                     const response = await fetch(`${process.env.BACKEND_URL}/api/restaurantes/${restauranteId}`, {
                         method: "PUT",
@@ -494,7 +504,8 @@ const getState = ({ getStore, getActions, setStore }) => {
                             horario_tarde_inicio: formatearHora(formData.horario_tarde_inicio),
                             horario_tarde_fin: formatearHora(formData.horario_tarde_fin),
                             reservas_por_dia: formData.reservas_por_dia,
-                            categorias_id: formData.categorias_id
+                            categorias_id: formData.categorias_id,
+                            telefono: formData.telefono
                         })
                     });
 
@@ -559,6 +570,7 @@ const getState = ({ getStore, getActions, setStore }) => {
                     console.log(error);
                 }
             },
+            
             // ELIMINAR RESTAURANTE
             eliminarRestaurante: async (restauranteId) => {
                 const token = sessionStorage.getItem("token");
