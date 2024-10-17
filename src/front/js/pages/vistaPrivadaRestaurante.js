@@ -4,7 +4,9 @@ import Swal from "sweetalert2";
 import { Context } from "../store/appContext";
 import "../../styles/vistaPrivadaRestaurante.css";
 import ModalCambiarPasswordRestaurante from '../component/modalCambiarPasswordRestaurante';
-import ModalEliminarRestaurante from '../component/modalEliminarRestaurante'; // Importamos el modal para eliminar restaurante
+import ModalEliminarRestaurante from '../component/modalEliminarRestaurante';
+import ModalDescripciones from '../component/modalDescripciones';
+
 
 export const VistaPrivadaRestaurante = () => {
   const { actions, store } = useContext(Context);
@@ -36,6 +38,7 @@ export const VistaPrivadaRestaurante = () => {
 
   const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
   const [isEliminarRestauranteOpen, setEliminarRestauranteOpen] = useState(false); // Estado para el modal de eliminación
+  const [isDescripcionModalOpen, setDescripcionModalOpen] = useState(false);
 
   const openModal = (field, currentValue) => {
     if (field === "horario_mañana" || field === "horario_tarde") {
@@ -49,7 +52,7 @@ export const VistaPrivadaRestaurante = () => {
     } else {
       setModalData({
         field: field,
-        value: currentValue,
+        value: "",
       });
     }
     const modal = new bootstrap.Modal(document.getElementById("editModal"));
@@ -74,39 +77,31 @@ export const VistaPrivadaRestaurante = () => {
   };
 
   const handleModalSave = () => {
-    // Verificar si el valor está vacío (para campos de texto)
-    if (modalData.field !== "horario_mañana" && modalData.field !== "horario_tarde" && modalData.value.trim() === "") {
-        const modal = bootstrap.Modal.getInstance(document.getElementById("editModal"));
-        modal.hide();
-        return;
-    }
-
-    // Verificar si los campos de horario están vacíos
-    if ((modalData.field === "horario_mañana" || modalData.field === "horario_tarde") &&
-        (modalData.value.inicio.trim() === "" || modalData.value.fin.trim() === "")) {
-        const modal = bootstrap.Modal.getInstance(document.getElementById("editModal"));
-        modal.hide();
-        return;
-    }
-
-    // Actualización de los horarios o de otros campos
     if (modalData.field === "horario_mañana" || modalData.field === "horario_tarde") {
-        setFormData({
-            ...formData,
-            [modalData.field + "_inicio"]: modalData.value.inicio,
-            [modalData.field + "_fin"]: modalData.value.fin,
-        });
+      setFormData({
+        ...formData,
+        [modalData.field + "_inicio"]: modalData.value.inicio,
+        [modalData.field + "_fin"]: modalData.value.fin,
+      });
     } else {
-        setFormData({
-            ...formData,
-            [modalData.field]: modalData.value,
-        });
+      setFormData({
+        ...formData,
+        [modalData.field]: modalData.value,
+      });
     }
-
-    // Cerrar el modal
     const modal = bootstrap.Modal.getInstance(document.getElementById("editModal"));
     modal.hide();
-};
+  };
+
+
+  const openDescripcionModal = () => {
+    setDescripcionModalOpen(true);
+  };
+
+  const closeDescripcionModal = () => {
+    setDescripcionModalOpen(false);
+  };
+
 
 
   useEffect(() => {
@@ -127,6 +122,7 @@ export const VistaPrivadaRestaurante = () => {
             horario_tarde_inicio: data.horario_tarde_inicio || "",
             horario_tarde_fin: data.horario_tarde_fin || "",
             direccion: data.direccion || "",
+            descripcion: data.descripcion || ""
           });
         } catch (error) {
           console.error("Error al obtener datos del restaurante:", error);
@@ -142,6 +138,7 @@ export const VistaPrivadaRestaurante = () => {
     const result = await actions.modificarDatosRestaurante(restaurante_id, dataToSend);
     if (result.success) {
       sessionStorage.setItem("user_name", formData.nombre);
+      actions.actualizarNombreResto(formData.nombre)
 
       Swal.fire({
         title: "Éxito",
@@ -168,44 +165,30 @@ export const VistaPrivadaRestaurante = () => {
   };
 
   const handleEliminarRestaurante = async () => {
-    // Muestra la alerta de confirmación antes de eliminar
-    Swal.fire({
-      title: '¿Estás seguro?',
-      text: "No podrás revertir esta acción",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#d33',
-      cancelButtonColor: '#3085d6',
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar'
-    }).then(async (result) => {
-      if (result.isConfirmed) {
-        // Aquí hacemos la eliminación solo si se confirma
-        const result = await actions.eliminarRestaurante(restaurante_id);
-        if (result.success) {
-          // Limpiar sessionStorage
-          sessionStorage.removeItem('restaurant_name');
-          sessionStorage.removeItem('restaurant_id');
+    const result = await actions.eliminarRestaurante(restaurante_id);
+    if (result.success) {
+      // Limpiar sessionStorage
+      sessionStorage.removeItem('restaurant_name');
+      sessionStorage.removeItem('restaurant_id');
 
-          Swal.fire({
-            title: "Eliminado",
-            text: "El restaurante ha sido eliminado con éxito.",
-            icon: "success",
-            confirmButtonText: "Aceptar"
-          }).then(() => {
-            navigate("/home");
-          });
-        } else {
-          Swal.fire({
-            title: "Error",
-            text: result.message || "Error al eliminar el restaurante.",
-            icon: "error",
-            confirmButtonText: "Aceptar"
-          });
-        }
-      }
-    });
+      Swal.fire({
+        title: "Eliminado",
+        text: "El restaurante ha sido eliminado con éxito.",
+        icon: "success",
+        confirmButtonText: "Aceptar"
+      }).then(() => {
+        navigate("/home");
+      });
+    } else {
+      Swal.fire({
+        title: "Error",
+        text: result.message || "Error al eliminar el restaurante.",
+        icon: "error",
+        confirmButtonText: "Aceptar"
+      });
+    }
   };
+
 
   return (
     <div className="area-privada">
@@ -331,6 +314,21 @@ export const VistaPrivadaRestaurante = () => {
               </div>
             </div>
 
+            <div className="col-md-6 mb-3">
+              <label htmlFor="descripcion" className="form-label">Descripción</label>
+              <div className="input-group">
+                <div className="input-content">
+                  <span className="form-control-plaintext">
+                    {formData.descripcion ? "La descripción está completa" : "No hay descripción"}
+                  </span>
+                  <span className="input-group-text icon-wrapper">
+                    <i className="fa-solid fa-pen-to-square small-icon" onClick={openDescripcionModal}></i>
+                  </span>
+                </div>
+              </div>
+            </div>
+
+
             <div className="text-left mt-4 col-12 d-flex justify-content-between">
               <button type="submit" className="btn btn-primary">Guardar Cambios</button>
               <button type="button" className="btn btn-secondary" onClick={goToCloudinary}>Cargar Imágenes</button>
@@ -345,12 +343,78 @@ export const VistaPrivadaRestaurante = () => {
           onClose={closePasswordModal}
         />
 
+        {/* Modal para editar Descripción */}
+        <ModalDescripciones
+          isOpen={isDescripcionModalOpen}
+          onClose={closeDescripcionModal}
+          restauranteId={restaurante_id}
+        />
+
+
         {/* Modal para Eliminar Restaurante */}
         <ModalEliminarRestaurante
           isOpen={isEliminarRestauranteOpen}
           onClose={() => setEliminarRestauranteOpen(false)}
           handleEliminarRestaurante={handleEliminarRestaurante}
         />
+
+        <div className="modal fade" id="editModal" tabIndex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+          <div className="modal-dialog">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title" id="editModalLabel">
+                  Editar {modalData.field === "nombre" ? "Nombre del Restaurante" :
+                    modalData.field === "telefono" ? "Teléfono" :
+                      modalData.field === "cubiertos" ? "Comensales" :
+                        modalData.field === "cantidad_mesas" ? "Cantidad de Mesas" :
+                          modalData.field === "reservas_por_dia" ? "Reservas por Día" :
+                            modalData.field === "horario_mañana" ? "Horario de Mañana" :
+                              modalData.field === "horario_tarde" ? "Horario de Tarde" :
+                                "Dirección"}
+                </h5>
+                <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div className="modal-body">
+                {modalData.field === "horario_mañana" || modalData.field === "horario_tarde" ? (
+                  <div>
+                    <label htmlFor="inicio">Hora Inicio</label>
+                    <input
+                      type="time"
+                      className="form-control mb-3"
+                      value={modalData.value.inicio}
+                      onChange={(e) => handleModalChange(e, "inicio")}
+                    />
+                    <label htmlFor="fin">Hora Fin</label>
+                    <input
+                      type="time"
+                      className="form-control"
+                      value={modalData.value.fin}
+                      onChange={(e) => handleModalChange(e, "fin")}
+                    />
+                  </div>
+                ) : (
+                  <input
+                    type="text"
+                    className="form-control"
+                    value={modalData.value}
+                    onChange={handleModalChange}
+                    placeholder={`Introduzca nuevo ${modalData.field === "nombre" ? "nombre" :
+                      modalData.field === "telefono" ? "teléfono" :
+                        modalData.field === "cubiertos" ? "comensales" :
+                          modalData.field === "cantidad_mesas" ? "cantidad de mesas" :
+                            modalData.field === "reservas_por_dia" ? "reservas por día" :
+                              modalData.field === "direccion" ? "dirección" : "valor"}`}
+                  />
+                )}
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" className="btn btn-primary" onClick={handleModalSave}>Aceptar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
